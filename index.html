@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System screen demo</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Tahoma,Arial,sans-serif}
+body{background:#000}
+#stage{height:100%;width:100%;display:flex;align-items:center;justify-content:center;text-align:center}
+#eyeStage{color:#eee}
+#eye{width:min(54vw,440px);height:min(25vw,190px);border:9px solid #ddd;border-radius:70% 20%;position:relative;margin:0 auto 28px;filter:drop-shadow(0 0 8px #aaa)}
+#eye:before{content:"";position:absolute;width:36%;aspect-ratio:1;border:8px solid #ddd;border-radius:50%;left:32%;top:7%;background:#000}
+#eye:after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:#eee;left:calc(50% - 6px);top:calc(50% - 6px)}
+#eyeStage h1{font-size:clamp(32px,6vw,76px);font-weight:400;letter-spacing:3px;margin:0}
+#skullStage{background:#a51000;color:#f4d6c7;position:relative;overflow:hidden}
+#skullStage:before{content:"";position:absolute;inset:12px;border:3px solid rgba(255,190,160,.35);box-shadow:inset 0 0 50px #4d0500,0 0 30px #4d0500}
+#skull{position:relative;z-index:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2",monospace;white-space:pre;line-height:1;text-align:center;font-size:min(3.15vh,3.1vw);max-width:100vw;max-height:100vh;overflow:hidden;text-shadow:0 0 9px #fff;animation:skullPulse .7s ease-in-out infinite alternate}
+@keyframes skullPulse{from{filter:brightness(.78);transform:scale(.985)}to{filter:brightness(1.25);transform:scale(1.015)}}
+#lockStage{background:#061c9c;color:#fff;padding:3vh 3vw}
+#lockPanel{width:min(1200px,96vw);background:#a9c5f5;color:#fff;border:4px ridge #dce7ff;box-shadow:0 0 0 2px #173a9a; text-align:left}
+#lockHeader{background:#063b9f;padding:18px 22px;text-align:center;border-bottom:5px solid #e7efff;font-size:clamp(25px,4vw,52px);font-weight:bold}
+#lockBody{padding:clamp(12px,2.2vw,28px);color:#fff;text-shadow:0 1px 1px #5274ae;font-size:clamp(15px,2vw,25px);line-height:1.35}
+#lockBody .lead{font-weight:bold;font-size:1.12em;margin:20px 0 8px}
+#lockControls{margin:20px auto 0;border:2px groove #e5edff;padding:14px;width:min(820px,100%);text-align:center;color:#111;text-shadow:none;background:#b9d0f5}
+.keyrow{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.key{min-width:42px;padding:7px 12px;background:linear-gradient(#fff,#d6d6d6);border:2px outset #eee;color:#111;font-size:20px}
+#codeLine{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;font-size:clamp(20px,2.6vw,32px)}
+#code{font-size:24px;width:min(320px,65vw);padding:8px;border:2px inset #ddd;background:#fff;color:#111}
+#submit{font-size:19px;padding:9px 18px;background:linear-gradient(#fff,#ddd);border:2px outset #eee;color:#111}
+#footnote{background:#073b9d;padding:12px 18px;font-size:clamp(13px,1.5vw,19px);line-height:1.35;border-top:5px solid #e7efff}
+#result{font-size:clamp(35px,6vw,76px);font-weight:bold;color:#fff;text-shadow:0 0 18px #f00}
+#resultStage{background:#061c9c;color:#fff;flex-direction:column;gap:20px}
+</style>
+</head>
+<body>
+<div id="stage"><div id="eyeStage"><div id="eye"></div><h1>ВАС ЗАМЕТИЛИ</h1></div></div>
+<script>
+"use strict";
+const stage=document.getElementById("stage");
+let timer=null,step=0;
+const skull="⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⠉⠉⠁⠄⠄⠄⠄⠈⠉⠉⠛⠿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠈⠻⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⠁⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⢸⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⡇⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⠄⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣇⠄⠄⠄⢀⣀⣀⣀⠄⠄⠄⠄⠄⢀⣀⣀⣀⡀⠄⠄⢠⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⡄⠄⣼⣿⣿⣿⣿⣷⠄⠄⠄⢀⣿⣿⣿⣿⣿⠄⠄⣼⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⠄⠹⣿⣿⣿⣿⠏⣰⣿⣷⡀⢿⣿⣿⣿⡿⠄⢸⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⠄⠄⠉⠛⠛⠁⢠⣿⣿⣿⣷⠄⠙⠛⠋⠄⠄⢸⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣄⣀⡀⠄⠄⠄⠈⠛⠋⠙⠋⠄⠄⠄⠄⣀⣀⣸⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣀⡄⠄⢀⡀⣀⠄⠄⣤⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⣿⣧⣿⣿⣟⣿⢸⣧⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠸⡏⠿⢿⡿⣿⠛⠏⢿⠁⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠄⠈⠁⠄⠄⠄⣠⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣤⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⡇⠄⠈⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠛⢻⣿⣿⣿⣿\n⣿⣿⣿⣿⠁⠄⠄⠄⠙⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠃⠄⠄⠸⣿⣿⣿⣿\n⣿⣿⣿⣿⣧⣤⣶⣶⣶⣦⣄⠈⠙⠿⣿⣿⣿⡿⠟⠋⢁⣀⣀⣀⠄⢠⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣤⠄⠉⠁⢀⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⢉⣠⣴⣶⣶⣤⣌⡙⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿\n⣿⣿⣿⣿⣿⣿⡿⠟⢋⣡⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣶⣤⣈⠙⠻⢿⣿⣿⣿⣿\n⠟⠛⠛⠛⠋⣁⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣄⠄⠄⠄⣨\n⣷⡄⠄⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠄⣼⣿\n⣿⣿⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿";
+function later(fn,ms){clearTimeout(timer);timer=setTimeout(fn,ms)}
+function showEye(){step=1;stage.style.background="#000";stage.innerHTML='<div id="eyeStage"><div id="eye"></div><h1>ВАС ЗАМЕТИЛИ</h1></div>';later(showSkull,2000)}
+function showSkull(){step=2;stage.style.background="#a51000";stage.innerHTML='<pre id="skull"></pre>';document.getElementById("skull").textContent=skull;later(showLocker,4800)}
+function showLocker(){step=3;stage.style.background="#061c9c";stage.innerHTML=`
+<div id="lockStage">
+ <div id="lockPanel">
+  <div id="lockHeader">Windows заблокирован!</div>
+  <div id="lockBody">
+   <div>Система обнаружила подозрительную активность.</div>
+   <div>Это экран-имитация для розыгрыша. Ваш компьютер и файлы не заблокированы.</div>
+   <div class="lead">Для завершения демонстрации:</div>
+   <div>Введите код в поле ниже и нажмите «ВХОД В СИСТЕМУ».</div>
+   <div id="lockControls">
+    <div class="keyrow"><span class="key">0</span><span class="key">1</span><span class="key">2</span><span class="key">3</span><span class="key">4</span><span class="key">5</span><span class="key">6</span><span class="key">7</span><span class="key">8</span><span class="key">9</span><span class="key">очистить</span></div>
+    <div id="codeLine"><label for="code">Ваш код:</label><input id="code" type="password" autocomplete="off"><button id="submit">ВХОД В СИСТЕМУ</button></div>
+    <div id="error" style="color:#9a0000;min-height:24px;font-size:16px;margin-top:8px"></div>
+   </div>
+  </div>
+  <div id="footnote">Демонстрационный экран. Никакие данные не изменяются и не удаляются. Закройте вкладку или нажмите Esc, чтобы выйти.</div>
+ </div>
+</div>`;
+const input=document.getElementById("code");
+const check=()=>{if(input.value.trim().toLowerCase()==="залупа"){showResult()}else{document.getElementById("error").textContent="Неверный код. Попробуйте ещё раз.";input.select()}};
+document.getElementById("submit").addEventListener("click",check);
+input.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
+document.querySelectorAll(".key").forEach(k=>k.addEventListener("click",()=>{if(k.textContent==="очистить")input.value="";else input.value+=k.textContent}));
+input.focus();
+}
+function showResult(){step=4;stage.style.background="#061c9c";stage.innerHTML='<div id="resultStage"><div id="result">ТИ БУВ ЗАРЕКРОЛЕНИЙ</div><div style="font-size:24px">Це був лише пранк. Система працює нормально.</div></div>'}
+function quit(){clearTimeout(timer);step=5;stage.style.background="#000";stage.innerHTML='<div style="color:#fff;font:32px Arial">Демонстрацію завершено.</div>'}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")quit()});
+window.addEventListener("load",showEye);
+</script>
+</body>
+</html>
